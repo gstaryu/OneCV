@@ -1,0 +1,67 @@
+name: Release
+
+# 打 tag（v*）触发：校验版本一致 → 打包扩展 zip → 按规范生成说明 → 创建 Release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 生成变更说明需要完整历史
+
+      - name: 校验 tag 与 manifest 版本一致
+        run: |
+          MANIFEST_VERSION=$(node -p "require('./manifest.json').version")
+          echo "manifest: ${MANIFEST_VERSION}, tag: ${GITHUB_REF_NAME}"
+          if [ "${GITHUB_REF_NAME}" != "v${MANIFEST_VERSION}" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} 与 manifest.json version ${MANIFEST_VERSION} 不一致"
+            exit 1
+          fi
+
+      - name: 打包扩展
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          mkdir -p dist
+          zip -qr "dist/OneCV-${VERSION}.zip" \
+            manifest.json background.js content.js content.css \
+            shared sidepanel resume-editor libs icons LICENSE
+          unzip -l "dist/OneCV-${VERSION}.zip"
+
+      - name: 按规范生成 Release 说明（Conventional Commits 分组）
+        run: |
+          # 上一个 tag；首个发布时回退到根提交
+          PREV=$(git tag --sort=-creatordate | grep -v "^${GITHUB_REF_NAME}$" | head -1 || true)
+          if [ -n "$PREV" ]; then RANGE="${PREV}..HEAD"; else RANGE="$(git rev-list --max-parents=0 HEAD)..HEAD"; fi
+          echo "变更范围: ${RANGE}"
+
+          section() {
+            local title="$1" pattern="$2"
+            local body
+            body=$(git log "${RANGE}" --pretty="%s" | grep -iE "^${pattern}" | sed -E 's/^[^:：]+[:：]\s*//' | sed 's/^/- /' || true)
+            if [ -n "$body" ]; then echo "### ${title}" >> notes.md; echo "${body}" >> notes.md; echo >> notes.md; fi
+          }
+
+          echo "# OneCV ${GITHUB_REF_NAME}" > notes.md
+          echo >> notes.md
+          section "✨ 新功能" "feat"
+          section "🐛 修复" "fix"
+          section "⚡ 性能" "perf"
+          section "📝 文档" "docs"
+          section "🧹 其他" "refactor|chore|test|ci|build|style"
+          # 无任何提交（如手动重跑）时兜底
+          [ -s notes.md ] || echo "- 无变更" >> notes.md
+          cat notes.md
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          body_path: notes.md
+          files: dist/*.zip
+          generate_release_notes: true # 附加 GitHub 自动生成的 Full Changelog 链接
