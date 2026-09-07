@@ -1,0 +1,45 @@
+/* OneCV — 页面内注入样式（content script 通过 manifest 的 css 注入） */
+.onecv-highlight {
+  outline: 2px solid #6366f1 !important;
+  outline-offset: 1px !important;
+  transition: outline-color 0.3s ease;
+}
+
+.onecv-highlight-low {
+  outline-color: #f59e0b !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+}
+
+.onecv-highlight-ok {
+  outline-color: #10b981 !important;
+}
+
+#onecv-region-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2147483646;
+  cursor: crosshair;
+  background: rgba(99, 102, 241, 0.06);
+}
+
+#onecv-region-box {
+  display: none;
+  position: absolute;
+  border: 2px dashed #6366f1;
+  background: rgba(99, 102, 241, 0.12);
+  pointer-events: none;
+}
+
+#onecv-region-tip {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+  background: #1e1b4b;
+  color: #e0e7ff;
+  font: 13px/1.6 system-ui, sans-serif;
+  padding: 8px 16px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

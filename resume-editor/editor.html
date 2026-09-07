@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OneCV 简历编辑</title>
+  <link rel="stylesheet" href="editor.css" />
+</head>
+<body>
+  <header class="editor-header">
+    <div>
+      <h1>OneCV 简历编辑</h1>
+      <p class="sub">数据只保存在本地浏览器扩展存储中。字段含义：填写最可能用于网申表单的规范值。</p>
+    </div>
+    <div class="actions">
+      <input type="file" id="import-file" accept=".json" hidden />
+      <button id="btn-export" class="btn">导出 JSON</button>
+      <button id="btn-import-json" class="btn">导入 JSON</button>
+      <button id="btn-save" class="btn primary">保存</button>
+    </div>
+  </header>
+
+  <div id="editor-layout">
+    <nav id="editor-nav"></nav>
+    <main id="editor-root"></main>
+  </div>
+
+  <footer class="editor-footer">
+    <span id="save-status"></span>
+  </footer>
+
+  <script src="../shared/one-alias-groups.js"></script>
+  <script src="../shared/one-map-parse.js"></script>
+  <script src="../shared/one-import-prompt.js"></script>
+  <script src="../shared/one-schema.js"></script>
+  <script src="../libs/pdf.min.js"></script>
+  <script src="../libs/pdf.worker.min.js"></script>
+  <script src="editor.js"></script>
+</body>
+</html>

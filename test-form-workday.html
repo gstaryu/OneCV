@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Workday-style Simulation - University Recruiting 2027</title>
+<style>
+ body{font:14px/1.7 Segoe UI,system-ui,sans-serif;background:#f2f2f2;margin:0}
+ .wd-shell{max-width:720px;margin:24px auto;background:#fff;padding:24px 32px;border:1px solid #ddd}
+ .wd-title{font-size:18px;font-weight:600;color:#0875e1}
+ fieldset{border:none;padding:0;margin:14px 0}
+ .wd-field{margin:12px 0}
+ .wd-field > span{display:block;font-weight:600;margin-bottom:4px}
+ input,select{width:300px;padding:8px;border:1px solid #bdbdbd;border-radius:4px;font:inherit}
+ .wd-inline{display:flex;gap:12px;align-items:flex-end}
+ iframe{width:100%;height:340px;border:1px solid #ccc;background:#fff}
+</style>
+</head>
+<body>
+<div class="wd-shell" data-automation-id="applicationPage">
+  <div class="wd-title">Apply — LLM Algorithm Engineer (Workday-style Simulation)</div>
+
+  <fieldset data-automation-id="legalNameSection">
+    <div class="wd-field" data-automation-id="legalNameSection_firstName">
+      <span>First Name</span>
+      <input data-automation-id="legalNameSection_firstName_input" name="firstName" />
+    </div>
+    <div class="wd-field" data-automation-id="legalNameSection_lastName">
+      <span>Last Name</span>
+      <input data-automation-id="legalNameSection_lastName_input" name="lastName" />
+    </div>
+    <div class="wd-field">
+      <span>Email</span>
+      <input type="email" data-automation-id="emailInput" name="email" />
+    </div>
+    <div class="wd-field">
+      <span>Phone</span>
+      <input data-automation-id="phoneInput" name="phone" />
+    </div>
+  </fieldset>
+
+  <div class="wd-field">
+    <span>Highest Education Level</span>
+    <select data-automation-id="educationLevelSelect" name="eduLevel">
+      <option value="">Select</option><option>Bachelor</option><option>Master</option><option>PhD</option>
+    </select>
+  </div>
+
+  <h3 style="color:#0875e1">Education History (in iframe, same-origin)</h3>
+  <iframe src="workday-iframe.html" data-automation-id="educationIframe"></iframe>
+</div>
+</body>
+</html>

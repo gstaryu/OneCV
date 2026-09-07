@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "OneCV — AI 简历填表助手",
+  "version": "0.2.0",
+  "description": "AI 识别网申表单字段并映射到你的简历 schema，本地确定性填值。不自动提交、不上传文件。",
+  "minimum_chrome_version": "114",
+  "permissions": ["storage", "scripting", "sidePanel", "tabs", "debugger"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "action": {
+    "default_title": "打开 OneCV 侧边栏",
+    "default_icon": {
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "128": "icons/icon128.png"
+  },
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": [
+        "shared/one-alias-groups.js",
+        "shared/one-schema.js",
+        "shared/one-field-text.js",
+        "shared/one-fill-runtime.js",
+        "shared/one-option-match.js",
+        "shared/one-scanner-dom.js",
+        "shared/one-fill-dom.js",
+        "shared/one-scanner-core.js",
+        "shared/one-date-picker.js",
+        "shared/one-deep-scan.js",
+        "shared/one-map-parse.js",
+        "shared/one-cache.js",
+        "shared/one-diagnostics.js",
+        "shared/one-storage.js",
+        "content.js"
+      ],
+      "css": ["content.css"],
+      "all_frames": true,
+      "run_at": "document_idle"
+    }
+  ]
+}

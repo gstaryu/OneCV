@@ -1,0 +1,22 @@
+# 本地密钥与私人文档（永不提交）
+key.txt
+OneCV_prompt.md
+OneCV_Prompt.md
+.claude/
+
+# 开发杂物
+tools/logo/
+tools/editor-custom.png
+tools/_deepscan_block.txt
+node_modules/
+npm-debug.log*
+
+# OS / 编辑器
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 注入测试用生成产物
+tools/_inject-bundle.js
+tools/_user-profile.js
+tools/_mappings.js

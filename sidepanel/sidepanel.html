@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OneCV</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <header class="topbar">
+    <span class="logo">OneCV</span>
+    <span class="tagline">AI 简历填表助手</span>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="fill">填表</button>
+    <button class="tab" data-tab="resume">简历</button>
+    <button class="tab" data-tab="settings">设置</button>
+    <button class="tab" data-tab="logs">日志</button>
+  </nav>
+
+  <main>
+    <!-- ============ 填表 ============ -->
+    <section id="panel-fill" class="panel active">
+      <div class="row">
+        <button id="btn-scan" class="btn secondary">① 扫描表单</button>
+        <span id="scan-status" class="status"></span>
+      </div>
+
+      <div class="row fill-modes">
+        <label><input type="radio" name="fill-mode" value="overwrite" checked /> 整页填充</label>
+        <label><input type="radio" name="fill-mode" value="incremental" /> 增量填入（跳过已填）</label>
+        <label><input type="radio" name="fill-mode" value="selection" /> 选区填充</label>
+      </div>
+
+      <div class="row">
+        <button id="btn-fill" class="btn primary" disabled>② AI 映射并填充</button>
+        <span id="fill-status" class="status"></span>
+      </div>
+
+      <div id="fill-warnings" class="warnings" hidden></div>
+      <div id="fill-results" class="results"></div>
+
+      <p class="note">
+        发送给模型的内容：字段 label / 选项文本 / 附近文本、页面 URL 与标题、已填写简历字段目录。
+        默认不自动提交、不处理文件上传与验证码。低置信度字段会高亮提示，请人工复查。
+      </p>
+    </section>
+
+    <!-- ============ 简历 ============ -->
+    <section id="panel-resume" class="panel">
+      <div id="resume-summary" class="resume-summary"></div>
+      <div class="row">
+        <button id="btn-open-editor" class="btn primary">打开简历编辑页</button>
+      </div>
+      <details>
+        <summary>粘贴简历原文，AI 一键整理为标准简历</summary>
+        <textarea id="import-text" rows="8" placeholder="把简历全文粘贴到这里……（将发送给模型进行结构化抽取）"></textarea>
+        <div class="row">
+          <button id="btn-import" class="btn primary">AI 抽取并保存</button>
+          <span id="import-status" class="status"></span>
+        </div>
+        <p class="note">仅支持有文字层的 PDF / 文本简历；扫描版 PDF 请先自行 OCR。抽取结果会合并进编辑页中对应字段，请抽取后复查。</p>
+      </details>
+    </section>
+
+    <!-- ============ 设置 ============ -->
+    <section id="panel-settings" class="panel">
+      <h3>文本模型（字段映射 / 简历抽取）</h3>
+      <label class="field">
+        <span>API 类型</span>
+        <select id="text-provider">
+          <option value="openai-compatible">OpenAI 兼容（DeepSeek / GLM / Doubao / Mimo…）</option>
+          <option value="anthropic">Anthropic</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Base URL</span>
+        <input type="text" id="text-baseurl" placeholder="https://ark.cn-beijing.volces.com/api/v3" />
+      </label>
+      <label class="field">
+        <span>模型名</span>
+        <input type="text" id="text-model" placeholder="例如 doubao-seed-2.0-lite / deepseek-v4-flash / glm-5.3-flash" />
+      </label>
+      <label class="field">
+        <span>API Key（仅存本地 chrome.storage）</span>
+        <input type="password" id="text-apikey" placeholder="sk-..." />
+      </label>
+
+      <!-- 视觉兜底：功能保留（sidepanel.js 的 vision-enabled/vision-model 读写照常，
+           background.js vision_mapping 分支不动），仅对用户隐藏。
+           重新启用：删掉本 div 的 hidden 属性即可。 -->
+      <div hidden>
+        <h3>视觉模型（可选，低置信度兜底）</h3>
+        <label class="check">
+          <input type="checkbox" id="vision-enabled" />
+          <span>启用视觉兜底（触发时会截图并调用视觉模型，消耗更多 token）</span>
+        </label>
+        <label class="field">
+          <span>视觉模型名（如 GLM-4V / Doubao-vision 系列）</span>
+          <input type="text" id="vision-model" placeholder="留空则复用文本模型配置" />
+        </label>
+      </div>
+
+      <h3>填充行为</h3>
+      <label class="field">
+        <span>低置信度阈值：<b id="threshold-value">0.7</b></span>
+        <input type="range" id="confidence-threshold" min="0.3" max="0.95" step="0.05" value="0.7" />
+      </label>
+      <label class="check">
+        <input type="checkbox" id="skip-low-confidence" />
+        <span>保守模式：低于阈值的字段直接跳过不填</span>
+      </label>
+
+      <!-- 强力填充（chrome.debugger）：功能保留（content.js debuggerFillYearBoxes /
+           debuggerSelectYear 及 manifest 的 debugger 权限均不动），仅对用户隐藏——
+           sd-Select 类过滤型下拉普通模式已可完整提交（见 shared/one-fill-dom.js
+           clickOpenThenSelect），强力模式退居"连选项点击都校验 isTrusted"组件的保底。
+           重新启用：删掉本 div 的 hidden 属性即可。 -->
+      <div hidden>
+        <h3>强力填充（可选）</h3>
+        <label class="check">
+          <input type="checkbox" id="debugger-enabled" />
+          <span>强力模式：用真实鼠标/滚轮事件自动选中合成事件搞不定的虚拟滚动年份下拉。填充时页面顶部会短暂出现"正在调试"横幅</span>
+        </label>
+      </div>
+
+      <div class="row">
+        <button id="btn-save-settings" class="btn primary">保存设置</button>
+        <span id="settings-status" class="status"></span>
+      </div>
+    </section>
+
+    <!-- ============ 日志 ============ -->
+    <section id="panel-logs" class="panel">
+      <div class="row">
+        <button id="btn-refresh-logs" class="btn secondary">刷新</button>
+        <button id="btn-export-logs" class="btn secondary">导出诊断日志</button>
+        <button id="btn-clear-logs" class="btn secondary">清空</button>
+      </div>
+      <div id="log-list" class="log-list"></div>
+    </section>
+  </main>
+
+  <script src="../shared/one-alias-groups.js"></script>
+  <script src="../shared/one-schema.js"></script>
+  <script src="../shared/one-provider.js"></script>
+  <script src="../shared/one-import-prompt.js"></script>
+  <script src="../shared/one-map-prompt.js"></script>
+  <script src="../shared/one-map-parse.js"></script>
+  <script src="../shared/one-scanner-core.js"></script>
+  <script src="../shared/one-cache.js"></script>
+  <script src="../shared/one-diagnostics.js"></script>
+  <script src="../shared/one-storage.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

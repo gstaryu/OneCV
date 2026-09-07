@@ -1,0 +1,13 @@
+{
+  "name": "onecv",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OneCV — AI 简历填表助手（Chrome/Edge MV3 扩展）",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/*.js",
+    "check": "npm test"
+  }
+}

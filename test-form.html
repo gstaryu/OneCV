@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>某公司 2027 届校园招聘网申系统（测试表单）</title>
+  <style>
+    body { font: 14px/1.8 system-ui, "Microsoft YaHei", sans-serif; background: #f4f5f7; margin: 0; }
+    .wrap { max-width: 720px; margin: 24px auto; background: #fff; border-radius: 10px; padding: 24px 32px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    h1 { font-size: 18px; }
+    fieldset { border: 1px solid #e5e7eb; border-radius: 8px; margin: 14px 0; }
+    legend { font-weight: 600; padding: 0 8px; }
+    .row { display: flex; gap: 16px; }
+    .row > div { flex: 1; }
+    label.top { display: inline-block; margin: 10px 8px 2px 0; }
+    input[type=text], input[type=tel], input[type=email], input[type=month], select, textarea {
+      width: 240px; padding: 7px 9px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; box-sizing: border-box;
+    }
+    textarea { width: 100%; }
+    .hint { color: #9ca3af; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>某公司 2027 届校园招聘网申系统（测试表单）</h1>
+
+    <fieldset>
+      <legend>基本信息</legend>
+      <div class="row">
+        <div>
+          <label class="top" for="name">姓名 <span class="hint">*</span></label>
+          <input type="text" id="name" name="candidateName" placeholder="与身份证一致" />
+        </div>
+        <div>
+          <label class="top" for="mobile">手机号码 <span class="hint">*</span></label>
+          <input type="tel" id="mobile" name="phone" placeholder="11位手机号" maxlength="11" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label class="top" for="mail">邮箱 <span class="hint">*</span></label>
+          <input type="email" id="mail" name="email" placeholder="name@example.com" />
+        </div>
+        <div>
+          <label class="top" for="edu">最高学历 <span class="hint">*</span></label>
+          <select id="edu" name="highestDegree">
+            <option value="">请选择</option>
+            <option>大专</option>
+            <option>本科</option>
+            <option>硕士</option>
+            <option>博士</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label class="top">性别 <span class="hint">*</span></label><br />
+          <input type="radio" name="gender" value="1" id="g1" /><label for="g1">男</label>
+          <input type="radio" name="gender" value="2" id="g2" /><label for="g2">女</label>
+        </div>
+        <div>
+          <label class="top" for="political">政治面貌</label>
+          <select id="political" name="politicalStatus">
+            <option value="">请选择</option>
+            <option>群众</option>
+            <option>中共党员</option>
+            <option>共青团员</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="top" for="city">现居城市</label>
+      <input type="text" id="city" name="city" />
+    </fieldset>
+
+    <fieldset>
+      <legend>教育经历（最新）</legend>
+      <div class="row">
+        <div>
+          <label class="top" for="school">学校名称 <span class="hint">*</span></label>
+          <input type="text" id="school" name="schoolName" />
+        </div>
+        <div>
+          <label class="top" for="major">专业</label>
+          <input type="text" id="major" name="majorName" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label class="top" for="start">入学时间</label>
+          <input type="month" id="start" name="eduStart" />
+        </div>
+        <div>
+          <label class="top" for="end">毕业时间</label>
+          <input type="month" id="end" name="eduEnd" />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>实习经历</legend>
+      <div class="row">
+        <div>
+          <label class="top" for="company">公司名称</label>
+          <input type="text" id="company" name="internCompany" />
+        </div>
+        <div>
+          <label class="top" for="wtitle">职位名称</label>
+          <input type="text" id="wtitle" name="internTitle" />
+        </div>
+      </div>
+      <label class="top" for="wdesc">工作职责</label>
+      <textarea id="wdesc" name="internDesc" rows="2" maxlength="5" placeholder="限5字（测试变体选择）"></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>其他</legend>
+      <label class="top" for="summary">自我评价</label>
+      <textarea id="summary" name="selfEvaluation" rows="2"></textarea>
+
+      <label class="top">是否接受调剂</label>
+      <input type="radio" name="adjust" value="yes" id="adj1" /><label for="adj1">是</label>
+      <input type="radio" name="adjust" value="no" id="adj2" /><label for="adj2">否</label>
+
+      <br />
+      <label class="top">可接受工作地点（多选）</label>
+      <input type="checkbox" name="cities" value="北京" id="c1" /><label for="c1">北京</label>
+      <input type="checkbox" name="cities" value="上海" id="c2" /><label for="c2">上海</label>
+      <input type="checkbox" name="cities" value="杭州" id="c3" /><label for="c3">杭州</label>
+
+      <br />
+      <label class="top" for="expect">期望薪资（元/月）</label>
+      <input type="text" id="expect" name="expectedSalary" />
+    </fieldset>
+
+    <button type="button" id="btn-submit-hint" onclick="alert('OneCV 不会自动提交；此按钮仅用于人工检查')">提交（仅提示）</button>
+    <button type="button" id="btn-arm-listeners" onclick="window.__onecvEventLog=[];document.querySelectorAll('input,select,textarea').forEach(function(el){el.addEventListener('change',function(e){window.__onecvEventLog.push(e.target.name+':change');});});alert('事件监听已装好')">装上事件监听（测试用）</button>
+  </div>
+</body>
+</html>

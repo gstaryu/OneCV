@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /><title>Education Section</title>
+<style>body{font:14px/1.7 Segoe UI,system-ui,sans-serif;margin:12px}
+.wd-field{margin:10px 0}.wd-field > span{display:block;font-weight:600;margin-bottom:3px}
+input,select{width:280px;padding:7px;border:1px solid #bdbdbd;border-radius:4px;font:inherit}
+.wd-inline{display:flex;gap:12px;align-items:flex-end}
+</style></head>
+<body>
+  <div class="wd-field" data-automation-id="schoolSection">
+    <span>School</span>
+    <input data-automation-id="schoolNameInput" name="school" />
+  </div>
+  <div class="wd-field" data-automation-id="majorSection">
+    <span>Field of Study / Major</span>
+    <input data-automation-id="majorInput" name="major" />
+  </div>
+  <div class="wd-field">
+    <span>Start Date</span>
+    <div class="wd-inline" data-automation-id="dateSectionStart">
+      <select data-automation-id="dateSectionMonth-input" name="startMonth">
+        <option value="">Month</option><option>1</option><option>2</option><option>3</option><option>9</option>
+      </select>
+      <input data-automation-id="dateSectionYear-input" name="startYear" placeholder="Year" maxlength="4" />
+    </div>
+  </div>
+  <div class="wd-field">
+    <span>End Date</span>
+    <div class="wd-inline" data-automation-id="dateSectionEnd">
+      <select data-automation-id="dateSectionMonth-input" name="endMonth">
+        <option value="">Month</option><option>3</option><option>6</option>
+      </select>
+      <input data-automation-id="dateSectionYear-input" name="endYear" placeholder="Year" maxlength="4" />
+    </div>
+  </div>
+</body>
+</html>

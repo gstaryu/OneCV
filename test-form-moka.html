@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>MokaHR 风格仿真 - 2027届校园招聘</title>
+<style>
+ body{font:14px/1.8 system-ui,"Microsoft YaHei",sans-serif;background:#fafafa;margin:0}
+ .atsx-page{max-width:760px;margin:24px auto;background:#fff;border-radius:8px;padding:24px 32px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+ .atsx-form-item{margin:12px 0}
+ .atsx-form-item label{display:block;font-weight:500;margin-bottom:4px}
+ .atsx-form-item label::before{content:"*";color:#f56c6c;margin-right:4px}
+ input,select,textarea{width:320px;padding:8px;border:1px solid #dcdfe6;border-radius:4px;font:inherit}
+ .atsx-row{display:flex;gap:20px}.atsx-row .atsx-form-item{flex:1}
+ .atsx-section-title{font-size:15px;font-weight:600;border-left:3px solid #409eff;padding-left:8px;margin:22px 0 10px}
+</style>
+</head>
+<body>
+<div class="atsx-page" data-cy="application-form">
+  <h2>2027届校园招聘申请表（MokaHR 风格仿真）</h2>
+
+  <div class="atsx-section-title">基本信息</div>
+  <div class="atsx-row">
+    <div class="atsx-form-item"><label>姓名</label><input data-cy="identification_nameInput" name="name" placeholder="请输入姓名" /></div>
+    <div class="atsx-form-item"><label>手机号</label><input data-cy="identification_mobileInput" name="mobile" maxlength="11" /></div>
+  </div>
+  <div class="atsx-row">
+    <div class="atsx-form-item"><label>电子邮箱</label><input data-cy="identification_emailInput" name="email" type="email" /></div>
+    <div class="atsx-form-item"><label>最高学历</label>
+      <select data-cy="education_degreeSelect" name="degree">
+        <option value="">请选择</option><option>大专</option><option>本科</option><option>硕士</option><option>博士</option>
+      </select>
+    </div>
+  </div>
+  <div class="atsx-form-item"><label>期望工作城市</label><input data-cy="jobIntention_cityInput" name="expectCity" /></div>
+
+  <!-- 动态渲染的工作经历（索引式重复行，300ms 后注入，测试动态表单） -->
+  <div class="atsx-section-title">工作/实习经历</div>
+  <div id="workExpContainer"></div>
+</div>
+<script>
+  setTimeout(function () {
+    var c = document.getElementById("workExpContainer");
+    [0, 1].forEach(function (i) {
+      var wrap = document.createElement("div");
+      wrap.className = "atsx-exp-block";
+      wrap.innerHTML =
+        '<div class="atsx-form-item"><label>公司名称</label><input data-cy="workExperiences[' + i + '].company" name="we_company_' + i + '" /></div>' +
+        '<div class="atsx-row">' +
+        '<div class="atsx-form-item"><label>职位名称</label><input data-cy="workExperiences[' + i + '].title" name="we_title_' + i + '" /></div>' +
+        '<div class="atsx-form-item"><label>开始时间</label><input type="month" name="we_start_' + i + '" data-cy="workExperiences[' + i + '].startDate" /></div>' +
+        '</div>' +
+        '<div class="atsx-form-item"><label>工作内容</label><textarea name="we_desc_' + i + '" rows="2"></textarea></div>';
+      c.appendChild(wrap);
+    });
+    window.__mokaFormReady = true;
+  }, 300);
+</script>
+</body>
+</html>

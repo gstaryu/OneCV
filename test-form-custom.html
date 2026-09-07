@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>自定义下拉组件仿真 - 某厂网申</title>
+<style>
+ body{font:14px/1.8 system-ui,"Microsoft YaHei",sans-serif;background:#f7f8fa;margin:0}
+ .wrap{max-width:640px;margin:24px auto;background:#fff;border-radius:8px;padding:24px 32px}
+ .custom-select{position:relative;width:280px}
+ .custom-select .trigger{width:100%;padding:8px 12px;border:1px solid #dcdfe6;border-radius:6px;box-sizing:border-box;font:inherit;cursor:pointer;background:#fff}
+ .panel{display:none;position:absolute;top:38px;left:0;width:100%;background:#fff;border:1px solid #e4e7ed;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:10}
+ .panel.open{display:block}
+ .option{padding:8px 12px;cursor:pointer}
+ .option:hover{background:#f5f7fa}
+ .option.selected{color:#409eff;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>自定义下拉组件仿真</h2>
+  <div class="form-item">
+    <label for="genderTrigger">性别</label>
+    <div class="custom-select" id="genderWidget">
+      <input class="trigger" id="genderTrigger" name="genderDisplay" placeholder="请选择性别" />
+      <div class="panel" id="genderPanel">
+        <div class="option" data-value="1">男</div>
+        <div class="option" data-value="2">女</div>
+      </div>
+      <input type="hidden" name="gender" id="genderValue" />
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var trigger = document.getElementById("genderTrigger");
+  var panel = document.getElementById("genderPanel");
+  var hidden = document.getElementById("genderValue");
+  var open = false;
+  trigger.addEventListener("click", function(){ open = !open; panel.classList.toggle("open", open); });
+  trigger.addEventListener("keydown", function(e){ if(e.key==="Escape"){ close(); } });
+  trigger.addEventListener("blur", function(){ setTimeout(close, 120); });
+  Array.prototype.forEach.call(panel.querySelectorAll(".option"), function(opt){
+    opt.addEventListener("click", function(){
+      hidden.value = opt.dataset.value;
+      trigger.value = opt.textContent.trim();
+      opt.classList.add("selected");
+      panel.classList.remove("open"); open=false;
+      hidden.dispatchEvent(new Event("change", {bubbles:true}));
+    });
+  });
+  document.addEventListener("mousedown", function(e){
+    if(!document.getElementById("genderWidget").contains(e.target)) close();
+  });
+  function close(){ panel.classList.remove("open"); open=false; }
+  window.__customPanel = function(){ return panel.classList.contains("open"); };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>Moka sd-Select 高仿真 - 过滤型下拉回归页</title>
+<!--
+  复刻 2026-09 在 app.mokahr.com 真实页面实测的 sd-Select 组件行为，用于回归
+  OneCVFillDom 的"开→点→收"流程。行为清单（全部来自真实页插桩结论）：
+  1. 菜单只监听 pointer 事件开/关（纯 mouse 合成序列打不开也关不上）
+  2. 聚焦时写 input → 菜单打开且按文本过滤；未聚焦时写 input → 菜单打开但显示
+     "暂无选项"（sd-Empty-empty-wrapper，无任何 option/item 结构）
+  3. 选项是 div.sd-Menu-content-item（无 li、无 role=option）
+  4. 合成 mousedown/mouseup/click 点选项即可提交（不校验 isTrusted）：
+     显示层 span 更新、input 清空、placeholder 变 ""、菜单自动关闭
+  5. Escape / 外部点击只在 isTrusted 时关菜单
+  6. 对已开菜单点触发器 label 是 toggle（关）
+  7. 年份菜单 1970-2126 降序 201 项，滚动容器视口高 272px
+  8. 提交"年"会把同组"月"自动置为 1（真实页实测 after=["2025","1"]）
+  页面直接加载 shared/ UMD 模块，window.__runSdTests() 用生产代码路径跑回归。
+-->
+<style>
+  body { font: 14px/1.8 system-ui, "Microsoft YaHei", sans-serif; background: #fafafa; margin: 0; }
+  .page { max-width: 720px; margin: 24px auto; background: #fff; border-radius: 8px; padding: 24px 32px; box-shadow: 0 1px 6px rgba(0,0,0,.06); }
+  .form-item { margin: 12px 0; }
+  .form-item > label.field { display: block; font-weight: 500; margin-bottom: 4px; }
+  .row { display: flex; gap: 12px; }
+  /* 注意：JS 里创建的元素用的是带 hash 后缀的类名（仿真实页），
+     CSS 必须用 [class*=...] 匹配，否则 position:fixed 等关键样式丢失，
+     弹层会掉到 body 末尾 → isPanelAnchored gap 超限 → 全部拒绝点击 */
+  .sd-Dropdown-container { display: inline-block; }
+  label[class*="sd-Select-container"] { display: inline-flex; align-items: center; border: 1px solid #dcdfe6; border-radius: 4px; padding: 0 8px; height: 38px; min-width: 110px; position: relative; background: #fff; }
+  label[class*="sd-Select-container"] [class*="sd-Input-display-value"] { max-width: 80px; overflow: hidden; }
+  label[class*="sd-Select-container"] input { border: none; outline: none; width: 60px; font: inherit; }
+  .sd-Icon-iconcaretDown::after { content: "▾"; }
+  [class*="sd-Dropdown-dropdown"] { position: fixed; z-index: 999; background: #fff; border: 1px solid #e0e0e0; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+  [class*="sd-Select-scrollable"] { max-height: 272px; overflow-y: auto; }
+  [class*="sd-Menu-container"] { padding: 6px 12px; cursor: pointer; }
+  [class*="sd-Menu-container"]:hover { background: #f5f7fa; }
+  [class*="sd-Empty-empty-wrapper"] { padding: 12px; color: #999; }
+  #results { margin-top: 16px; font-family: monospace; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h2>Moka sd-Select 高仿真回归页</h2>
+
+  <div class="form-item"><label class="field">性别</label><div class="sd-Dropdown-container" data-sd-select="gender"></div></div>
+  <div class="form-item"><label class="field">最高学历</label><div class="sd-Dropdown-container" data-sd-select="degree"></div></div>
+
+  <div class="form-item"><label class="field">起止时间（工作经历）</label>
+    <div class="row month-range-select">
+      <div class="sd-Dropdown-container" data-sd-select="work-start-year" data-pair="work-start"></div>
+      <div class="sd-Dropdown-container" data-sd-select="work-start-month" data-pair="work-start"></div>
+      <span>—</span>
+      <div class="sd-Dropdown-container" data-sd-select="work-end-year" data-pair="work-end"></div>
+      <div class="sd-Dropdown-container" data-sd-select="work-end-month" data-pair="work-end"></div>
+    </div>
+  </div>
+
+  <div id="results"></div>
+</div>
+
+<script src="shared/one-alias-groups.js"></script>
+<script src="shared/one-fill-runtime.js"></script>
+<script src="shared/one-option-match.js"></script>
+<script src="shared/one-fill-dom.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  function years() {
+    const list = [];
+    for (let y = 2126; y >= 1970; y -= 1) list.push(String(y));
+    return list;
+  }
+  function months() {
+    return Array.from({ length: 12 }, (_, i) => String(i + 1));
+  }
+
+  const OPTIONS = {
+    "gender": ["男", "女"],
+    "degree": ["大专", "本科", "硕士研究生", "博士研究生"],
+    "work-start-year": years(), "work-start-month": months(),
+    "work-end-year": years(), "work-end-month": months(),
+  };
+  const PLACEHOLDER = { "gender": "请选择", "degree": "请选择" };
+
+  const registry = {}; // name → { input, label, dropdown, items, open, selected }
+
+  function createSdSelect(name) {
+    const host = document.querySelector('[data-sd-select="' + name + '"]');
+    const label = document.createElement("label");
+    label.className = "sd-Input-container-2S_vM sd-Select-container-1Eq4x";
+    const display = document.createElement("span");
+    display.className = "sd-Input-display-value-RwqDy";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "sd-Input-input-10L0t";
+    input.placeholder = PLACEHOLDER[name] || (/year/.test(name) ? "年" : "月");
+    input.autocomplete = "nope";
+    const addon = document.createElement("span");
+    addon.className = "sd-Input-addon-1Dv-z";
+    const icon = document.createElement("span");
+    icon.className = "sd-Icon-container-1EGHG sd-Icon-iconcaretDown-juEqC";
+    addon.appendChild(icon);
+    label.append(display, input, addon);
+    host.appendChild(label);
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "sd-Dropdown-dropdown-GmACl";
+    dropdown.style.display = "none";
+    const menu = document.createElement("div");
+    menu.className = "sd-Select-menu-36GwS";
+    const scrollable = document.createElement("div");
+    scrollable.className = "sd-Select-scrollable-6CVW5";
+    menu.appendChild(scrollable);
+    dropdown.appendChild(menu);
+    document.body.appendChild(dropdown);
+
+    const state = { name, host, label, display, input, dropdown, scrollable, open: false, selected: "" };
+    registry[name] = state;
+
+    function positionDropdown() {
+      const r = label.getBoundingClientRect();
+      dropdown.style.left = r.left + "px";
+      dropdown.style.top = (r.bottom + 6) + "px";
+      dropdown.style.minWidth = r.width + "px";
+    }
+
+    function renderItems(query) {
+      scrollable.innerHTML = "";
+      // 过滤模式只在 input 聚焦时生效（真实页实测：未聚焦写值弹"暂无选项"）
+      const active = document.activeElement === input;
+      const list = active && query ? OPTIONS[name].filter((t) => t.includes(query)) : OPTIONS[name];
+      if (!list.length) {
+        const empty = document.createElement("div");
+        empty.className = "sd-Empty-empty-wrapper-2I9kI";
+        empty.textContent = "暂无选项";
+        scrollable.appendChild(empty);
+        return;
+      }
+      for (const text of list) {
+        const row = document.createElement("div");
+        row.className = "sd-Menu-container-1WISQ";
+        const content = document.createElement("div");
+        content.className = "sd-Menu-content-bDquM";
+        const item = document.createElement("div");
+        item.className = "sd-Menu-content-item-3BOO1";
+        const span = document.createElement("span");
+        span.setAttribute("data-key", "sugar.select.label");
+        span.textContent = text;
+        item.appendChild(span);
+        content.appendChild(item);
+        row.appendChild(content);
+        // 行为 4：合成 mouse 序列即可提交（不校验 isTrusted）
+        row.addEventListener("mousedown", () => commit(text));
+        scrollable.appendChild(row);
+      }
+    }
+
+    function openMenu() {
+      state.open = true;
+      positionDropdown();
+      renderItems(input.value);
+      dropdown.style.display = "block";
+    }
+    function closeMenu() {
+      state.open = false;
+      dropdown.style.display = "none";
+    }
+
+    function commit(text) {
+      state.selected = text;
+      display.textContent = text;
+      input.value = "";
+      input.placeholder = ""; // 行为 4：提交后 placeholder 变空
+      closeMenu();
+      // 行为 8：提交"年"会把同组"月"自动置为 1
+      const pair = host.getAttribute("data-pair");
+      if (pair && /year/.test(name)) {
+        const monthName = pair + "-month";
+        const month = registry[monthName];
+        if (month && month.selected !== "1") {
+          month.selected = "1";
+          month.display.textContent = "1";
+          month.input.value = "";
+          month.input.placeholder = "";
+        }
+      }
+    }
+
+    // 行为 1：开关只监听 pointer 序列（对已开菜单是 toggle）
+    label.addEventListener("pointerdown", () => {
+      if (state.open) closeMenu();
+      else openMenu();
+    });
+    // 行为 2：写 input 自动弹菜单（聚焦=过滤，未聚焦=暂无选项）
+    input.addEventListener("input", () => {
+      if (!state.open) openMenu();
+      else renderItems(input.value);
+    });
+    // 行为 5：Escape / 外部点击只在 isTrusted 时生效
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && state.open && e.isTrusted) closeMenu();
+    });
+    document.addEventListener("pointerdown", (e) => {
+      if (state.open && e.isTrusted && !dropdown.contains(e.target) && !label.contains(e.target)) closeMenu();
+    });
+  }
+
+  for (const name of Object.keys(OPTIONS)) createSdSelect(name);
+
+  // ---- 回归 harness：走生产代码路径（OneCVFillDom），模拟 content.js fillOne ----
+  function displayOf(name) {
+    const s = registry[name];
+    return (s.display.textContent || "").trim();
+  }
+  function anyMenuOpen() {
+    return Object.values(registry).some((s) => s.open);
+  }
+
+  async function fillLikeContentScript(name, value, descriptorOptions) {
+    const input = registry[name].input;
+    // fillOne 的 select 分支：解析选项文本 + 聚焦 + 写值 + 开点收
+    const resolved = OneCVFillDom.resolveOptionText(descriptorOptions, value);
+    const finalValue = resolved || value;
+    if (!input.readOnly) {
+      try { input.focus(); } catch (_) {}
+    }
+    OneCVFillDom.writeTextInput(input, finalValue);
+    const ok = await OneCVFillDom.clickOpenThenSelect(input, finalValue);
+    return { ok, display: displayOf(name), menuOpen: registry[name].open };
+  }
+
+  window.__runSdTests = async function () {
+    const out = [];
+    const check = (name, desc, pass, detail) => {
+      out.push((pass ? "PASS" : "FAIL") + " " + name + " — " + desc + (detail ? " | " + detail : ""));
+    };
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    // T1 年份（长列表 + 过滤模式 + 显示层提交）
+    let r = await fillLikeContentScript("work-start-year", "2023", []);
+    check("T1", "年份 2023 经过滤菜单提交", r.ok && r.display === "2023" && !r.menuOpen, "display=" + JSON.stringify(r.display));
+
+    // T2 月份（紧随年份之后，模拟 年→月 顺序）
+    r = await fillLikeContentScript("work-start-month", "9", []);
+    check("T2", "月份 9 提交", r.ok && r.display === "9", "display=" + JSON.stringify(r.display));
+
+    // T3 未聚焦写值弹"暂无选项"菜单 → 清过滤词回退 + 模糊别名匹配
+    //（descriptor 无选项清单，值"大学本科"是选项"本科"的别名）
+    r = await fillLikeContentScript("degree", "大学本科", []);
+    check("T3", "别名值（大学本科→本科）经清过滤词回退提交", r.ok && r.display === "本科", "display=" + JSON.stringify(r.display));
+
+    // T4 精确选项文本（已解析，descriptor.options 提供）
+    r = await fillLikeContentScript("gender", "男", []);
+    check("T4", "性别 男 提交", r.ok && r.display === "男", "display=" + JSON.stringify(r.display));
+
+    // T5 无匹配值：菜单必须被收起（toggle 兜底），不留悬挂面板
+    const genderInput = registry["gender"].input;
+    genderInput.focus();
+    OneCVFillDom.writeTextInput(genderInput, "男");
+    await OneCVFillDom.clickOpenThenSelect(genderInput, "不存在的选项XYZ");
+    check("T5", "无匹配值后菜单收起（无悬挂）", !anyMenuOpen(), "open=" + anyMenuOpen());
+
+    // T6 年提交联动月=1（编排层必须先年后月）
+    r = await fillLikeContentScript("work-end-year", "2025", []);
+    await sleep(100);
+    check("T6", "年 2025 提交且联动月=1", r.ok && r.display === "2025" && displayOf("work-end-month") === "1",
+      "year=" + JSON.stringify(r.display) + " month=" + JSON.stringify(displayOf("work-end-month")));
+
+    // T7 月在年被提交后重填（年先月后顺序下的月提交）
+    r = await fillLikeContentScript("work-end-month", "6", []);
+    check("T7", "月 6 在年之后重填成功", r.ok && r.display === "6", "display=" + JSON.stringify(r.display));
+
+    // T8 增量模式判值：已提交字段读显示层而非 input.value
+    const committed = OneCVFillDom.readDisplayValue(registry["work-start-year"].input);
+    check("T8", "readDisplayValue 读到已提交年份", committed === "2023", "got=" + JSON.stringify(committed));
+
+    const failed = out.filter((l) => l.startsWith("FAIL"));
+    out.push("---- " + (failed.length ? failed.length + " FAILED" : "ALL PASS"));
+    document.getElementById("results").textContent = out.join("\n");
+    return out;
+  };
+})();
+</script>
+</body>
+</html>
